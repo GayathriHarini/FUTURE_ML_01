@@ -1,4 +1,4 @@
-# Machine Learning Placement Projects 🚀
+# Machine Learning Projects 🚀
 
 ## 1️⃣ Sales Forecasting
 - Time series analysis
