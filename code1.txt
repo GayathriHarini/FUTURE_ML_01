@@ -1,0 +1,87 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("superstore_sales.csv", encoding='latin1')
+
+# Convert Order Date to datetime
+df['Order Date'] = pd.to_datetime(df['Order Date'])
+
+# Sort by date
+df = df.sort_values('Order Date')
+
+df.head()
+
+df_month = df.groupby(
+    pd.Grouper(key='Order Date', freq='ME')
+)['Sales'].sum().reset_index()
+
+df_month.head()
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(12,6))
+plt.plot(df_month['Order Date'], df_month['Sales'], marker='o')
+plt.title("Monthly Sales Trend")
+plt.xlabel("Date")
+plt.ylabel("Total Sales")
+plt.grid()
+plt.show()
+
+df_month['Year'] = df_month['Order Date'].dt.year
+df_month['Month'] = df_month['Order Date'].dt.month
+
+df_month.head()
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+
+X = df_month[['Year', 'Month']]
+y = df_month['Sales']
+
+# Split without shuffling (important for time series)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, shuffle=False)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict
+df_month['Predicted_Sales'] = model.predict(X)
+
+# Evaluate
+mae = mean_absolute_error(y_test, model.predict(X_test))
+print("Mean Absolute Error (MAE):", mae)
+
+plt.figure(figsize=(12,6))
+plt.plot(df_month['Order Date'], df_month['Sales'], label='Actual')
+plt.plot(df_month['Order Date'], df_month['Predicted_Sales'], label='Predicted')
+plt.title("Actual vs Predicted Sales")
+plt.xlabel("Date")
+plt.ylabel("Sales")
+plt.legend()
+plt.grid()
+plt.show()
+
+import pandas as pd
+
+# Create future dates
+last_date = df_month['Order Date'].max()
+future_dates = pd.date_range(last_date, periods=7, freq='ME')[1:]
+
+future_df = pd.DataFrame({'Order Date': future_dates})
+future_df['Year'] = future_df['Order Date'].dt.year
+future_df['Month'] = future_df['Order Date'].dt.month
+
+# Predict future sales
+future_df['Forecasted_Sales'] = model.predict(
+    future_df[['Year','Month']]
+)
+
+future_df
+
+df_month.to_csv("sales_forecast_output.csv", index=False)
+future_df.to_csv("future_forecast.csv", index=False)
+
+print("Files saved for Tableau ")
